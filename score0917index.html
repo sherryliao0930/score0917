@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式自主查詢系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            transition: background-color 0.5s;
+        }
+        .main-card {
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-press {
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .btn-press:active {
+            transform: translateY(2px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-orange-100 via-rose-100 to-sky-200 flex items-center justify-center min-h-screen p-4" data-theme="student">
+
+    <div id="app" class="w-full max-w-lg mx-auto">
+        <!-- 家長查詢介面 -->
+        <div id="student-view" class="main-card bg-white/70 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-xl relative pb-10">
+            <div id="query-section">
+                <h1 class="text-2xl font-bold text-center text-orange-800 mb-2">互動式自主查詢系統</h1>
+                <p class="text-center text-stone-500 text-sm mb-6">✨ 每一個人都是閃亮的星子，不會因為座標偏遠而放棄發光！ ✨</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="student-code" class="block text-sm font-medium text-stone-600">查詢代碼</label>
+                        <input type="text" id="student-code" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500" placeholder="請輸入您的查詢代碼">
+                        <p class="text-xs text-stone-400 text-center mt-2 px-2 leading-relaxed">
+                            💖 成績不過是航海時的浮標，不決定船的去向。<br>
+                            決定航程的是孩子心裡那股想再學一次的勇氣 💖
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="query-btn" class="w-full btn-press bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <span id="query-btn-text">查詢</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="result-section" class="hidden mt-6">
+                <div class="mb-4 border-b pb-2">
+                    <h2 class="text-xl font-bold text-center text-orange-800">查詢結果</h2>
+                     <div class="mt-2 text-left">
+                        <p id="student-seat" class="font-semibold text-stone-700" style="font-size: 1.125rem; font-weight: 600;"></p>
+                        <p id="student-name" class="font-semibold text-stone-700" style="font-size: 1.125rem; font-weight: 600;"></p>
+                    </div>
+                </div>
+                <div>
+                    <label for="category-select" class="block text-sm font-medium text-stone-600">查詢類別</label>
+                    <select id="category-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"></select>
+                </div>
+                <div id="result-content" class="mt-4"></div>
+            </div>
+             <!-- Teacher login trigger -->
+            <div class="absolute bottom-2 right-4">
+                 <button id="teacher-login-trigger" class="text-xs text-stone-400 hover:text-stone-600 transition-colors focus:outline-none">
+                    教師入口
+                 </button>
+            </div>
+        </div>
+
+        <!-- 老師登入介面 -->
+        <div id="teacher-login-view" class="hidden main-card bg-white/70 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-xl">
+            <h1 class="text-2xl font-bold text-center text-amber-800 mb-6">老師管理登入</h1>
+            <div class="space-y-4">
+                <div>
+                    <label for="teacher-password" class="block text-sm font-medium text-stone-600">管理密碼</label>
+                    <input type="password" id="teacher-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                </div>
+                <button id="login-btn" class="w-full btn-press bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">登入</button>
+                <button id="back-to-student-view-btn" class="w-full btn-press bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">返回家長查詢</button>
+            </div>
+        </div>
+        
+        <!-- 老師管理後台 -->
+        <div id="teacher-admin-view" class="hidden main-card bg-white/70 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-4xl mx-auto">
+             <div class="flex justify-between items-center mb-6 border-b pb-2">
+                <h1 class="text-2xl font-bold text-amber-800">資料管理後台</h1>
+                <div>
+                    <button id="back-to-main-btn" class="btn-press bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all mr-2">返回主頁</button>
+                    <button id="logout-btn" class="btn-press bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">登出</button>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-amber-700 mb-2">系統設定</h3>
+                    <p class="text-sm text-stone-600 mb-2">請將您的「系統設定」工作表發布成 .csv 格式，並將網址貼在下方。網站的所有內容都將由此設定檔驅動。</p>
+                    <div class="flex items-center space-x-2">
+                        <input type="url" id="config-sheet-url" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+                        <button id="save-config-btn" class="btn-press bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">儲存並更新設定</button>
+                    </div>
+                     <button id="open-template-guide-btn" class="mt-2 text-sm text-amber-600 hover:text-amber-800 hover:underline">不知道如何設定？點此開啟設定教學</button>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-amber-700 mb-2">資料預覽</h3>
+                    <button id="refresh-data-btn" class="btn-press bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all mb-2">從雲端重整資料</button>
+                    <div id="data-preview" class="bg-gray-100 p-4 rounded-md h-48 overflow-auto text-sm text-stone-700">
+                        點擊「從雲端重整資料」來預覽載入的學生名單。
+                    </div>
+                </div>
+
+                <!-- New Password Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-amber-700 mb-2">密碼管理</h3>
+                    <div class="space-y-2">
+                        <div>
+                            <label for="new-password" class="block text-sm font-medium text-stone-600">新密碼</label>
+                            <input type="password" id="new-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label for="confirm-password" class="block text-sm font-medium text-stone-600">確認新密碼</label>
+                            <input type="password" id="confirm-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-amber-500 focus:border-amber-500">
+                        </div>
+                        <button id="update-password-btn" class="w-full btn-press bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all">更新密碼</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const studentView = document.getElementById('student-view');
+        const teacherLoginView = document.getElementById('teacher-login-view');
+        const teacherAdminView = document.getElementById('teacher-admin-view');
+        const teacherLoginTrigger = document.getElementById('teacher-login-trigger');
+
+        const studentCodeInput = document.getElementById('student-code');
+        const queryBtn = document.getElementById('query-btn');
+        const queryBtnText = document.getElementById('query-btn-text');
+
+        const resultSection = document.getElementById('result-section');
+        const studentSeat = document.getElementById('student-seat');
+        const studentName = document.getElementById('student-name');
+        const categorySelect = document.getElementById('category-select');
+        const resultContent = document.getElementById('result-content');
+
+        const teacherPasswordInput = document.getElementById('teacher-password');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const backToStudentViewBtn = document.getElementById('back-to-student-view-btn');
+        const backToMainBtn = document.getElementById('back-to-main-btn');
+
+        const configSheetUrlInput = document.getElementById('config-sheet-url');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        const refreshDataBtn = document.getElementById('refresh-data-btn');
+        const dataPreview = document.getElementById('data-preview');
+        const openTemplateGuideBtn = document.getElementById('open-template-guide-btn');
+
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const updatePasswordBtn = document.getElementById('update-password-btn');
+
+        // App State
+        let config = {
+            configSheetUrl: '',
+        };
+        let studentList = [];
+        let configData = [];
+        let allDataCache = {};
+        let subjectCategoryMap = {}; // New state for subject categories
+        let currentStudentQuery = null;
+        let teacherPassword = 'teacher123'; // Default password
+
+        // --- Core Logic ---
+
+        function setQueryState(isLoading, message) {
+            studentCodeInput.disabled = isLoading;
+            queryBtn.disabled = isLoading;
+            queryBtnText.textContent = message;
+            if (isLoading) {
+                queryBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            } else {
+                queryBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        }
+
+        function parseCSV(text) {
+             const rows = [];
+            let insideQuote = false;
+            let record = [];
+            let field = '';
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (insideQuote) {
+                    if (char === '"') {
+                        if (i + 1 < text.length && text[i + 1] === '"') {
+                            field += '"';
+                            i++;
+                        } else {
+                            insideQuote = false;
+                        }
+                    } else {
+                        field += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        insideQuote = true;
+                    } else if (char === ',') {
+                        record.push(field);
+                        field = '';
+                    } else if (char === '\n' || char === '\r') {
+                        if (field || record.length > 0) {
+                            record.push(field);
+                            rows.push(record);
+                        }
+                        record = [];
+                        field = '';
+                        if (char === '\r' && i + 1 < text.length && text[i + 1] === '\n') {
+                            i++;
+                        }
+                    } else {
+                        field += char;
+                    }
+                }
+            }
+            if (field || record.length) {
+                record.push(field);
+                rows.push(record);
+            }
+            return rows.filter(row => row.length > 1 || (row.length === 1 && row[0] && row[0].trim() !== ''));
+        }
+
+        async function fetchCSV(url) {
+            try {
+                const urlWithCacheBuster = `${url}&t=${new Date().getTime()}`;
+                const response = await fetch(urlWithCacheBuster);
+                if (!response.ok) {
+                    throw new Error(`網路回應錯誤: ${response.status}`);
+                }
+                const text = await response.text();
+                return parseCSV(text);
+            } catch (error) {
+                console.error(`讀取CSV失敗: ${url}`, error);
+                throw error;
+            }
+        }
+
+        async function loadAllData() {
+            if (!config.configSheetUrl) {
+                setQueryState(true, '請先設定網址');
+                return false;
+            }
+            try {
+                const configCsv = await fetchCSV(config.configSheetUrl);
+                configData = configCsv.slice(1);
+                
+                const studentListConfig = configData.find(row => row[0] === '[學生名單]');
+                if (!studentListConfig) {
+                    throw new Error('在您的「系統設定」表中找不到 "[學生名單]" 的設定。');
+                }
+
+                const studentListUrl = studentListConfig[1];
+                const studentListCsv = await fetchCSV(studentListUrl);
+                studentList = studentListCsv.slice(1).map(row => ({ code: row[0], seat: row[1], name: row[2] }));
+
+                // Load subject categories (new)
+                const categoryConfig = configData.find(row => row[0] === '[科目分類]');
+                if (categoryConfig && categoryConfig[1]) {
+                    try {
+                        const categoryUrl = categoryConfig[1];
+                        const categoryCsv = await fetchCSV(categoryUrl);
+                        subjectCategoryMap = categoryCsv.slice(1).reduce((map, row) => {
+                            if (row[0] && row[1]) {
+                                map[row[0].trim()] = row[1].trim();
+                            }
+                            return map;
+                        }, {});
+                    } catch (e) {
+                        console.warn("科目分類工作表讀取失敗，將不進行分類。", e);
+                        subjectCategoryMap = {};
+                    }
+                } else {
+                    subjectCategoryMap = {};
+                }
+
+
+                allDataCache = {};
+                 const enabledCategories = configData.filter(row => !row[0].startsWith('[') && row[2] && row[2].trim().toLowerCase() === '是');
+
+                for (const category of enabledCategories) {
+                    const categoryName = category[0];
+                    const categoryUrl = category[1];
+                    const categoryCsv = await fetchCSV(categoryUrl);
+                    const headers = categoryCsv[0];
+                    const categoryData = categoryCsv.slice(1);
+                    allDataCache[categoryName] = { headers, data: categoryData };
+                }
+                
+                return true;
+            } catch (error) {
+                alert(`資料載入失敗：${error.message}`);
+                console.error(error);
+                return false;
+            }
+        }
+        
+        function findStudent(code) {
+            return studentList.find(s => s.code === code);
+        }
+
+        function getStudentData(student) {
+            const studentData = {};
+            const studentSeat = student.seat;
+
+            for (const categoryName in allDataCache) {
+                const { headers, data } = allDataCache[categoryName];
+                const studentRow = data.find(row => row[0] === studentSeat);
+                
+                if (studentRow) {
+                    studentData[categoryName] = {};
+                    headers.slice(2).forEach((header, index) => {
+                         studentData[categoryName][header] = studentRow[index + 2] || '';
+                    });
+                }
+            }
+            return studentData;
+        }
+
+        function displayStudentData(studentData) {
+            const orderedCategories = configData
+                .filter(row => !row[0].startsWith('[') && row[2] && row[2].trim().toLowerCase() === '是')
+                .map(row => row[0]);
+
+            categorySelect.innerHTML = orderedCategories
+                .filter(categoryName => studentData[categoryName])
+                .map(categoryName => `<option value="${categoryName}">${categoryName}</option>`)
+                .join('');
+            
+            if (categorySelect.options.length === 0) {
+                 resultContent.innerHTML = `<p class="text-center text-gray-500">目前沒有這位學生的成績資料可供查詢。</p>`;
+                 return;
+            }
+
+            const selectedCategory = categorySelect.value;
+            renderResultContent(studentData, selectedCategory);
+        }
+
+        function renderResultContent(studentData, categoryName) {
+            const data = studentData[categoryName];
+            if (!data) {
+                resultContent.innerHTML = `<p class="text-center text-gray-500">此類別尚無資料。</p>`;
+                return;
+            }
+
+            // Fallback to old rendering if no categories are defined
+            if (Object.keys(subjectCategoryMap).length === 0) {
+                const tableRows = Object.entries(data).map(([key, value]) => {
+                    let formattedValue = escapeHTML(value || '');
+                    if(formattedValue.includes('\n')) {
+                        const lines = formattedValue.split('\n').filter(line => line.trim() !== '');
+                        if (lines.length > 1) {
+                            formattedValue = `<ul class="list-disc list-inside text-left inline-block">${lines.map(line => `<li>${line}</li>`).join('')}</ul>`;
+                        }
+                    }
+                    return `
+                        <tr class="border-b">
+                            <td class="py-3 px-4 font-medium text-stone-700 w-1/3 text-left">${escapeHTML(key)}</td>
+                            <td class="py-3 px-4 text-stone-800 text-center" style="font-size: 1.1rem;">${formattedValue}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                resultContent.innerHTML = `
+                    <div class="overflow-x-auto rounded-lg border">
+                        <table class="w-full bg-white">
+                            <tbody class="divide-y">
+                                ${tableRows.replaceAll('<tr class="border-b">', '<tr class="border-b bg-orange-50 odd:bg-white">')}
+                            </tbody>
+                        </table>
+                    </div>`;
+                return;
+            }
+
+            // New grouped rendering logic
+            const groupedData = {};
+            for (const [subject, value] of Object.entries(data)) {
+                 const category = subjectCategoryMap[subject.trim()] || '其它項目';
+                 if (!groupedData[category]) {
+                    groupedData[category] = [];
+                 }
+                 groupedData[category].push({ subject, value });
+            }
+
+            const categoryColors = {
+                '語文': { bg: 'bg-sky-100', text: 'text-sky-800' },
+                '數理': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
+                '社會': { bg: 'bg-amber-100', text: 'text-amber-800' },
+                '藝文': { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800' },
+                '其它項目': { bg: 'bg-stone-100', text: 'text-stone-800' },
+            };
+            
+            let html = '<div class="space-y-4">';
+            for (const [category, items] of Object.entries(groupedData)) {
+                 const color = categoryColors[category] || categoryColors['其它項目'];
+                 html += `
+                    <div class="rounded-lg overflow-hidden border">
+                        <h4 class="${color.bg} ${color.text} font-bold p-2 text-center">${escapeHTML(category)}</h4>
+                        <table class="w-full bg-white">
+                            <tbody>`;
+                items.forEach(({ subject, value }) => {
+                    let formattedValue = escapeHTML(value || '');
+                    if(formattedValue.includes('\n')) {
+                        const lines = formattedValue.split('\n').filter(line => line.trim() !== '');
+                        if (lines.length > 1) {
+                            formattedValue = `<ul class="list-disc list-inside text-left inline-block">${lines.map(line => `<li>${line}</li>`).join('')}</ul>`;
+                        }
+                    }
+                    html += `
+                        <tr class="border-b last:border-b-0 bg-orange-50 odd:bg-white">
+                            <td class="py-3 px-4 font-medium text-stone-700 w-1/3 text-left">${escapeHTML(subject)}</td>
+                            <td class="py-3 px-4 text-stone-800 text-center" style="font-size: 1.1rem;">${formattedValue}</td>
+                        </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+            html += '</div>';
+            resultContent.innerHTML = html;
+        }
+        
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // --- UI and Event Handlers ---
+        
+        function showView(view) {
+            studentView.classList.add('hidden');
+            teacherLoginView.classList.add('hidden');
+            teacherAdminView.classList.add('hidden');
+            
+            if (view === 'student') {
+                studentView.classList.remove('hidden');
+            } else if (view === 'login') {
+                teacherLoginView.classList.remove('hidden');
+            } else if (view === 'admin') {
+                teacherAdminView.classList.remove('hidden');
+            }
+        }
+
+        async function handleQuery() {
+            const code = studentCodeInput.value.trim();
+            if (!code) {
+                alert('請輸入查詢代碼。');
+                return;
+            }
+            
+            setQueryState(true, '查詢中...');
+            const success = await loadAllData();
+            
+            if (!success) {
+                setQueryState(true, '載入失敗');
+                return;
+            }
+
+            currentStudentQuery = code;
+            const student = findStudent(code);
+            if (student) {
+                studentSeat.textContent = `座號：${student.seat}`;
+                studentName.textContent = `姓名：${student.name}`;
+                
+                const studentData = getStudentData(student);
+                displayStudentData(studentData);
+
+                resultSection.classList.remove('hidden');
+            } else {
+                alert('查詢代碼錯誤，或資料同步中，請稍後再試一次。');
+                resultSection.classList.add('hidden');
+            }
+            setQueryState(false, '查詢');
+        }
+        
+
+        function handleTeacherLogin() {
+            if (teacherPasswordInput.value === teacherPassword) {
+                sessionStorage.setItem('teacher-logged-in', 'true');
+                showView('admin');
+                displayAdminData();
+            } else {
+                alert('密碼錯誤！');
+            }
+        }
+        
+        function handleUpdatePassword() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!newPassword || !confirmPassword) {
+                alert('密碼欄位不可為空。');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('兩次輸入的密碼不相符，請重新確認。');
+                return;
+            }
+
+            teacherPassword = newPassword;
+            localStorage.setItem('grade-system-password', newPassword);
+            alert('密碼已成功更新！');
+            
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+        }
+
+        function displayAdminData() {
+            configSheetUrlInput.value = config.configSheetUrl;
+            updateDataPreview();
+        }
+        
+        function updateDataPreview() {
+             if (studentList.length > 0) {
+                dataPreview.innerHTML = `成功載入 ${studentList.length} 位學生。<br>${studentList.map(s => `[${s.seat}] ${s.name}`).join('<br>')}`;
+            } else {
+                dataPreview.textContent = '尚未載入任何資料，或學生名單為空。';
+            }
+        }
+
+        function saveConfig() {
+            config.configSheetUrl = configSheetUrlInput.value.trim();
+            localStorage.setItem('grade-system-config', JSON.stringify(config));
+            alert('設定已儲存！請點擊「從雲端重整資料」以套用新設定。');
+        }
+
+        async function init() {
+            const savedConfig = localStorage.getItem('grade-system-config');
+            if (savedConfig) {
+                config = JSON.parse(savedConfig);
+            }
+            
+            const savedPassword = localStorage.getItem('grade-system-password');
+            if (savedPassword) {
+                teacherPassword = savedPassword;
+            }
+
+            // Always start at the student view for security on refresh
+            showView('student');
+
+            setQueryState(true, '資料載入中...');
+            const success = await loadAllData();
+            if (success) {
+                console.log("初始資料載入成功。");
+                setQueryState(false, '查詢');
+            } else {
+                setQueryState(true, '載入失敗');
+            }
+
+            // Event Listeners
+            teacherLoginTrigger.addEventListener('click', () => showView('login'));
+            backToStudentViewBtn.addEventListener('click', () => showView('student'));
+            backToMainBtn.addEventListener('click', () => showView('student'));
+
+            queryBtn.addEventListener('click', handleQuery);
+            studentCodeInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') handleQuery();
+            });
+
+            loginBtn.addEventListener('click', handleTeacherLogin);
+            teacherPasswordInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') handleTeacherLogin();
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                sessionStorage.removeItem('teacher-logged-in');
+                showView('student');
+            });
+            
+            categorySelect.addEventListener('change', (e) => {
+                const student = findStudent(currentStudentQuery);
+                if (student) {
+                    const studentData = getStudentData(student);
+                    renderResultContent(studentData, e.target.value);
+                }
+            });
+
+            saveConfigBtn.addEventListener('click', saveConfig);
+            refreshDataBtn.addEventListener('click', async () => {
+                const success = await loadAllData();
+                if(success) {
+                    updateDataPreview();
+                    alert('資料已從雲端同步！');
+                }
+            });
+            openTemplateGuideBtn.addEventListener('click', () => {
+                window.open('template.html', '_blank');
+            });
+            updatePasswordBtn.addEventListener('click', handleUpdatePassword);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
+
